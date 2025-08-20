@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid Line Pressure Drop Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Liquid Line Pressure Drop Calculator</h1>
+            <p class="text-md text-gray-600 mt-2">An engineering tool to calculate pressure loss in pipes and fittings.</p>
+	    <p class="text-md text-gray-600 mt-2">Manish V Shah, Vadodara. WhatsApp : 94299 26447</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-3">Inputs</h2>
+
+                <!-- Fluid Properties -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Fluid Properties</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="density" class="block text-sm font-medium text-gray-600">Density (kg/m³)</label>
+                            <div class="flex items-center">
+                                <input type="number" id="density" value="998" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Enter the density of the liquid. For water at room temperature, it's approximately 998 kg/m³.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="viscosity" class="block text-sm font-medium text-gray-600">Dynamic Viscosity (mPa·s or cP)</label>
+                             <div class="flex items-center">
+                                <input type="number" id="viscosity" value="1.002" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Enter the dynamic viscosity. For water at room temperature, it's about 1.002 mPa·s (or centiPoise).</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="flowRate" class="block text-sm font-medium text-gray-600">Volume Flow Rate (m³/hr)</label>
+                             <div class="flex items-center">
+                                <input type="number" id="flowRate" value="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Enter the total volume of liquid flowing through the pipe per hour.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pipe Details -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Pipe Details</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="pipeMaterial" class="block text-sm font-medium text-gray-600">Pipe Material</label>
+                            <div class="flex items-center">
+                                <select id="pipeMaterial" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="0.0015">Copper</option>
+                                    <option value="0.045" selected>Commercial Steel</option>
+                                    <option value="0.0025">PVC / Plastic</option>
+                                </select>
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Select the pipe material to determine its absolute roughness (ε).</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pipeDiameter" class="block text-sm font-medium text-gray-600">Inner Diameter (mm)</label>
+                            <div class="flex items-center">
+                                <input type="number" id="pipeDiameter" value="25" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Enter the internal diameter of the pipe.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pipeLength" class="block text-sm font-medium text-gray-600">Pipe Length (m)</label>
+                            <div class="flex items-center">
+                                <input type="number" id="pipeLength" value="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="tooltip ml-2">
+                                    <span class="cursor-pointer text-gray-400">ⓘ</span>
+                                    <span class="tooltiptext">Enter the total straight length of the pipe.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fittings Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Fittings & Valves</h3>
+                    <div id="fittings-container" class="space-y-3">
+                        <!-- Dynamic fittings will be added here -->
+                    </div>
+                    <button id="add-fitting-btn" class="mt-4 w-full text-sm font-medium text-indigo-600 hover:text-indigo-800 py-2 px-4 border border-indigo-500 rounded-md hover:bg-indigo-50 transition">
+                        + Add Fitting
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-3">Results</h2>
+                <div class="flex justify-center mb-6">
+                    <button id="calculate-btn" class="w-full md:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-transform transform hover:scale-105">
+                        Calculate
+                    </button>
+                </div>
+                <div id="results-content" class="space-y-4 hidden">
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                        <span class="font-medium text-gray-600">Fluid Velocity:</span>
+                        <span id="velocity-result" class="font-bold text-lg text-indigo-600">0 m/s</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                        <span class="font-medium text-gray-600">Reynolds Number:</span>
+                        <span id="reynolds-result" class="font-bold text-lg text-indigo-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                        <span class="font-medium text-gray-600">Friction Factor:</span>
+                        <span id="friction-result" class="font-bold text-lg text-indigo-600">0</span>
+                    </div>
+                    <hr class="my-4">
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                        <span class="font-medium text-gray-600">Pipe Pressure Drop:</span>
+                        <span id="pipe-drop-result" class="font-bold text-lg text-indigo-600">0 kPa</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-md">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-gray-600">Fittings Pressure Drop:</span>
+                            <span id="fittings-drop-result" class="font-bold text-lg text-indigo-600">0 kPa</span>
+                        </div>
+                        <div id="individual-fittings-loss-container" class="mt-2 space-y-1 border-t pt-2">
+                            <!-- Individual losses will be injected here -->
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-indigo-600 text-white p-4 rounded-lg shadow-xl text-center">
+                        <span class="text-lg font-medium">Total Pressure Drop:</span>
+                        <div id="total-drop-result" class="text-3xl font-extrabold mt-1">0 kPa</div>
+                        <div id="total-drop-psi-result" class="text-md font-medium mt-1">(0 psi)</div>
+                    </div>
+                </div>
+                 <div id="welcome-message" class="text-center text-gray-500 mt-8">
+                    <p>Enter your parameters and click "Calculate" to see the results.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-gray-500 text-sm">
+        <p>Manish V Shah, Vadodara.</p>
+        <p>WhatsApp : 94299 26447</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DATA ---
+            const fittingKFactors = {
+                'elbow_90_long': { name: '90° Elbow (Long Radius)', k: 0.6 },
+                'elbow_90_short': { name: '90° Elbow (Short Radius)', k: 0.9 },
+                'elbow_45': { name: '45° Elbow', k: 0.4 },
+                'gate_valve_full': { name: 'Gate Valve (Fully Open)', k: 0.15 },
+                'globe_valve_full': { name: 'Globe Valve (Fully Open)', k: 10.0 },
+                'ball_valve_full': { name: 'Ball Valve (Fully Open)', k: 0.05 },
+                'check_valve_swing': { name: 'Check Valve (Swing)', k: 2.5 },
+                'tee_line': { name: 'Tee (Line Flow)', k: 0.6 },
+                'tee_branch': { name: 'Tee (Branch Flow)', k: 1.8 }
+            };
+
+            // --- DOM ELEMENTS ---
+            const addFittingBtn = document.getElementById('add-fitting-btn');
+            const fittingsContainer = document.getElementById('fittings-container');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const resultsContent = document.getElementById('results-content');
+            const welcomeMessage = document.getElementById('welcome-message');
+
+            let fittingCount = 0;
+
+            // --- FUNCTIONS ---
+
+            /**
+             * Adds a new row for selecting a fitting and its quantity.
+             */
+            function addFittingRow() {
+                fittingCount++;
+                const fittingId = `fitting-${fittingCount}`;
+                const row = document.createElement('div');
+                row.classList.add('flex', 'items-center', 'space-x-2', 'fitting-row');
+                row.id = fittingId;
+
+                let optionsHtml = '';
+                for (const key in fittingKFactors) {
+                    optionsHtml += `<option value="${fittingKFactors[key].k}">${fittingKFactors[key].name}</option>`;
+                }
+
+                row.innerHTML = `
+                    <select class="fitting-type block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        ${optionsHtml}
+                    </select>
+                    <input type="number" value="1" min="1" class="fitting-qty w-20 text-center px-2 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <button type="button" class="remove-fitting-btn text-red-500 hover:text-red-700 font-bold p-2 rounded-full" title="Remove Fitting">&times;</button>
+                `;
+
+                fittingsContainer.appendChild(row);
+
+                row.querySelector('.remove-fitting-btn').addEventListener('click', () => {
+                    row.remove();
+                });
+            }
+
+            /**
+             * Calculates the friction factor using the Haaland equation (an explicit approximation of Colebrook-White).
+             * @param {number} re - Reynolds number.
+             * @param {number} relRoughness - Relative roughness (ε/D).
+             * @returns {number} The Darcy friction factor (f).
+             */
+            function calculateFrictionFactor(re, relRoughness) {
+                if (re < 2300) { // Laminar flow
+                    return 64 / re;
+                } else { // Turbulent flow
+                    const term1 = -1.8 * Math.log10(Math.pow(relRoughness / 3.7, 1.11) + (6.9 / re));
+                    return Math.pow(1 / term1, 2);
+                }
+            }
+
+            /**
+             * Main calculation logic.
+             */
+            function performCalculations() {
+                // 1. Get and convert inputs to SI units
+                const density = parseFloat(document.getElementById('density').value); // kg/m³
+                const viscosityPaS = parseFloat(document.getElementById('viscosity').value) * 0.001; // mPa·s to Pa·s
+                const flowRateM3s = parseFloat(document.getElementById('flowRate').value) / 3600; // m³/hr to m³/s
+                const pipeRoughness = parseFloat(document.getElementById('pipeMaterial').value) / 1000; // mm to m
+                const diameterM = parseFloat(document.getElementById('pipeDiameter').value) / 1000; // mm to m
+                const lengthM = parseFloat(document.getElementById('pipeLength').value); // m
+
+                // Validate inputs
+                if ([density, viscosityPaS, flowRateM3s, pipeRoughness, diameterM, lengthM].some(isNaN)) {
+                    // Replaced alert with a less intrusive message
+                    const totalDropResult = document.getElementById('total-drop-result');
+                    totalDropResult.textContent = 'Invalid Input';
+                    totalDropResult.classList.add('text-red-400');
+                    document.getElementById('total-drop-psi-result').textContent = '';
+                    resultsContent.classList.remove('hidden');
+                    welcomeMessage.classList.add('hidden');
+                    return;
+                }
+                 document.getElementById('total-drop-result').classList.remove('text-red-400');
+
+
+                // 2. Perform calculations
+                const area = Math.PI * Math.pow(diameterM / 2, 2);
+                const velocity = flowRateM3s / area; // m/s
+                
+                const reynoldsNumber = (density * velocity * diameterM) / viscosityPaS;
+                
+                const relativeRoughness = pipeRoughness / diameterM;
+                const frictionFactor = calculateFrictionFactor(reynoldsNumber, relativeRoughness);
+
+                // Darcy-Weisbach equation for pipe pressure drop
+                const pipePressureDropPa = frictionFactor * (lengthM / diameterM) * (density * Math.pow(velocity, 2) / 2);
+
+                // Calculate pressure drop from fittings and individual losses
+                let fittingsPressureDropPa = 0;
+                const individualLossContainer = document.getElementById('individual-fittings-loss-container');
+                individualLossContainer.innerHTML = ''; // Clear previous results
+
+                document.querySelectorAll('.fitting-row').forEach(row => {
+                    const select = row.querySelector('.fitting-type');
+                    const k = parseFloat(select.value);
+                    const qty = parseInt(row.querySelector('.fitting-qty').value, 10);
+                    const fittingName = select.options[select.selectedIndex].text;
+
+                    if (!isNaN(k) && !isNaN(qty) && qty > 0) {
+                        const individualDropPa = (k * qty) * (density * Math.pow(velocity, 2) / 2);
+                        fittingsPressureDropPa += individualDropPa;
+
+                        // Create and append the result row for this fitting
+                        const lossElement = document.createElement('div');
+                        lossElement.className = 'flex justify-between items-center text-sm text-gray-600 pl-4 border-l-2 border-gray-200';
+                        lossElement.innerHTML = `
+                            <span>${qty} x ${fittingName}</span>
+                            <span class="font-semibold">${(individualDropPa / 1000).toFixed(3)} kPa</span>
+                        `;
+                        individualLossContainer.appendChild(lossElement);
+                    }
+                });
+
+
+                const totalPressureDropPa = pipePressureDropPa + fittingsPressureDropPa;
+
+                // 3. Update UI with results
+                document.getElementById('velocity-result').textContent = `${velocity.toFixed(2)} m/s`;
+                document.getElementById('reynolds-result').textContent = `${reynoldsNumber.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                document.getElementById('friction-result').textContent = `${frictionFactor.toFixed(4)}`;
+                
+                document.getElementById('pipe-drop-result').textContent = `${(pipePressureDropPa / 1000).toFixed(2)} kPa`;
+                document.getElementById('fittings-drop-result').textContent = `${(fittingsPressureDropPa / 1000).toFixed(2)} kPa`;
+                
+                const totalDropKPa = totalPressureDropPa / 1000;
+                const totalDropPsi = totalPressureDropPa * 0.000145038;
+                document.getElementById('total-drop-result').textContent = `${totalDropKPa.toFixed(2)} kPa`;
+                document.getElementById('total-drop-psi-result').textContent = `(${(totalDropPsi).toFixed(2)} psi)`;
+
+                // Show results
+                resultsContent.classList.remove('hidden');
+                welcomeMessage.classList.add('hidden');
+            }
+
+
+            // --- EVENT LISTENERS ---
+            addFittingBtn.addEventListener('click', addFittingRow);
+            calculateBtn.addEventListener('click', performCalculations);
+
+            // --- INITIALIZATION ---
+            addFittingRow(); // Start with one fitting row by default
+        });
+    </script>
+</body>
+</html>

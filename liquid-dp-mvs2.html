@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liquid Line Pressure Drop Calculator</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --panel: #111827;     /* gray-900 */
+      --panel-2: #0b1220;   /* darker */
+      --text: #e5e7eb;      /* gray-200 */
+      --muted: #9ca3af;     /* gray-400 */
+      --brand: #22d3ee;     /* cyan-400 */
+      --accent: #a78bfa;    /* violet-400 */
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --border: #1f2937;    /* gray-800 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text); background: radial-gradient(1200px 800px at 10% -10%, #1e293b 0, transparent 60%),
+                              radial-gradient(1000px 700px at 110% 10%, #1f2937 0, transparent 60%),
+                              var(--bg);
+    }
+    header { padding: 24px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; backdrop-filter: blur(4px); background: linear-gradient(180deg, rgba(15,23,42,.8), rgba(15,23,42,.6)); z-index: 2; }
+    header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: .2px; }
+    header p { margin: 6px 0 0 0; color: var(--muted); font-size: 13px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 22px; display: grid; grid-template-columns: 360px 1fr; gap: 18px; }
+    .card { background: linear-gradient(180deg, rgba(17,24,39,.8), rgba(11,18,32,.9)); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+    .card h2 { margin: 0; padding: 18px; font-size: 15px; text-transform: uppercase; letter-spacing: .12em; color: var(--brand); border-bottom: 1px solid var(--border); }
+    .card .content { padding: 16px 18px 20px; }
+    .grid { display: grid; gap: 12px; }
+    .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); font-size: 14px; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); border-color: transparent; }
+    .help { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { appearance: none; cursor: pointer; border: 1px solid var(--border); background: linear-gradient(180deg, #0f172a, #0b1220); color: var(--text); padding: 9px 12px; border-radius: 10px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+    .btn:hover { border-color: #374151; }
+    .btn.primary { background: linear-gradient(180deg, #164e63, #0e7490); border-color: #155e75; }
+    .btn.ghost { background: transparent; }
+    .tag { display: inline-flex; gap: 6px; align-items: center; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px dashed #223048; font-size: 14px; }
+    th { text-align: left; color: var(--muted); font-weight: 600; }
+    .pill { padding: 3px 8px; border-radius: 999px; font-size: 12px; }
+    .pill.ok { background: rgba(52,211,153,.1); color: var(--good); border: 1px solid rgba(52,211,153,.3); }
+    .pill.warn { background: rgba(251,191,36,.08); color: var(--warn); border: 1px solid rgba(251,191,36,.3); }
+    .pill.bad { background: rgba(248,113,113,.08); color: var(--bad); border: 1px solid rgba(248,113,113,.3); }
+    details { border: 1px solid var(--border); border-radius: 12px; }
+    details > summary { cursor: pointer; padding: 10px 12px; color: var(--accent); }
+    details .hint { padding: 0 12px 12px; color: var(--muted); }
+    footer { max-width: 1200px; margin: 16px auto 40px; padding: 0 22px; color: var(--muted); font-size: 12px; }
+    .small { font-size: 12px; color: var(--muted); }
+    .right { text-align: right; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Liquid Line Pressure Drop & Velocity Calculator : Manish V Shah, Vadodara. WhatsApp : 94299 26447</h1>
+    <p>Darcy–Weisbach with minor losses. Incompressible liquids only. Built-in guidance for each input.</p>
+  </header>
+
+  <div class="wrap">
+    <!-- Inputs panel -->
+    <section class="card">
+      <h2>Inputs</h2>
+      <div class="content grid">
+        <div class="grid cols-2">
+          <div>
+            <label for="units">Unit System</label>
+            <select id="units">
+              <option value="si" selected>SI (Pa, m, kg/s)</option>
+              <option value="us">US Customary (psi, ft, gpm)</option>
+            </select>
+            <div class="help">Choose units. You can type numbers in any unit fields; labels will update.</div>
+          </div>
+          <div>
+            <label for="fluidPreset">Fluid Preset (optional)</label>
+            <select id="fluidPreset">
+              <option value="">-- none --</option>
+              <option value='{"rho":998,"mu":0.001}'>Water @ 20°C (ρ≈998 kg/m³, μ≈1 cP)</option>
+              <option value='{"rho":789,"mu":0.0012}'>Ethanol @ 20°C</option>
+              <option value='{"rho":860,"mu":0.05}'>Light Oil</option>
+              <option value='{"rho":1000,"mu":1}'>Glycerin (example, μ=1 Pa·s)</option>
+            </select>
+            <div class="help">Presets fill density and viscosity. You can override anytime.</div>
+          </div>
+        </div>
+
+        <div class="grid cols-2">
+          <div>
+            <label for="rho">Density ρ <span class="small" id="rhoUnit">(kg/m³)</span></label>
+            <input id="rho" type="number" step="any" placeholder="e.g., 998" />
+            <div class="help">Liquid density. For water near room temperature, ~998 kg/m³.</div>
+          </div>
+          <div>
+            <label for="mu">Dynamic Viscosity μ <span class="small" id="muUnit">(Pa·s)</span></label>
+            <input id="mu" type="number" step="any" placeholder="e.g., 0.001" />
+            <div class="help">Tip: 1 cP = 0.001 Pa·s. Example water μ≈0.001 Pa·s.</div>
+          </div>
+        </div>
+
+        <div class="grid cols-3">
+          <div>
+            <label for="D">Pipe Inside Diameter D <span class="small" id="dUnit">(m)</span></label>
+            <input id="D" type="number" step="any" placeholder="e.g., 0.05" />
+            <div class="help">Measure ID, not nominal size. Example: 50 mm → 0.05 m.</div>
+          </div>
+          <div>
+            <label for="L">Straight Length L <span class="small" id="lUnit">(m)</span></label>
+            <input id="L" type="number" step="any" placeholder="e.g., 30" />
+            <div class="help">Total straight pipe length excluding equivalent lengths for fittings.</div>
+          </div>
+          <div>
+            <label for="roughPreset">Pipe Roughness</label>
+            <select id="roughPreset">
+              <option value="">-- choose material --</option>
+              <option value='{"eps":0.000045}'>Commercial Steel (ε≈0.045 mm)</option>
+              <option value='{"eps":0.00015}'>Galvanized Iron (ε≈0.15 mm)</option>
+              <option value='{"eps":0.0000015}'>Drawn Copper (ε≈0.0015 mm)</option>
+              <option value='{"eps":0.000005}'>PVC / Smooth Plastic (ε≈0.005 mm)</option>
+              <option value='{"eps":0.0003}'>Concrete (ε≈0.3 mm)</option>
+            </select>
+            <div class="help">Select a material or enter ε manually below.</div>
+          </div>
+        </div>
+
+        <div class="grid cols-2">
+          <div>
+            <label for="eps">Absolute Roughness ε <span class="small" id="epsUnit">(m)</span></label>
+            <input id="eps" type="number" step="any" placeholder="e.g., 0.000045" />
+            <div class="help">If unknown, use the material preset above.</div>
+          </div>
+          <div>
+            <label for="dz">Elevation Change Δz <span class="small" id="zUnit">(m, +up)</span></label>
+            <input id="dz" type="number" step="any" placeholder="e.g., 3" />
+            <div class="help">Positive when discharging higher than suction centerline. Leave 0 if horizontal.</div>
+          </div>
+        </div>
+
+        <div class="grid cols-3">
+          <div>
+            <label for="flowType">Flow Input</label>
+            <select id="flowType">
+              <option value="Q" selected>Volumetric Flow Rate</option>
+              <option value="mDot">Mass Flow Rate</option>
+            </select>
+          </div>
+          <div>
+            <label for="Q">Q <span class="small" id="qUnit">(m³/h)</span></label>
+            <input id="Q" type="number" step="any" placeholder="e.g., 2" />
+          </div>
+          <div>
+            <label for="mDot">ṁ <span class="small" id="mdotUnit">(kg/s)</span></label>
+            <input id="mDot" type="number" step="any" placeholder="(optional if Q given)" />
+          </div>
+        </div>
+
+        <details>
+          <summary>Need help choosing values?</summary>
+          <div class="hint">
+            <ul>
+              <li><b>Density ρ</b>: Look up at your operating temperature (kg/m³). Water ≈ 998 kg/m³ at 20°C.</li>
+              <li><b>Viscosity μ</b>: Enter in Pa·s. Convert cP by dividing by 1000.</li>
+              <li><b>Roughness ε</b>: Small number in meters. Use presets if you don't know exact ε.</li>
+              <li><b>Flow</b>: If you know gpm or L/s, switch units system below or type and use the converter in the ⚙️ Tools section.</li>
+            </ul>
+          </div>
+        </details>
+
+        <div class="row" style="justify-content: space-between; align-items:center; margin-top: 8px;">
+          <div class="row">
+            <button class="btn" id="btnExample">Use Example</button>
+            <button class="btn ghost" id="btnReset">Reset</button>
+          </div>
+          <div class="row">
+            <span class="tag">Model: Darcy–Weisbach + Minor K</span>
+            <span class="tag">Friction f: Haaland (Colebrook refine)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fittings + Tools + Results -->
+    <section class="card">
+      <h2>Fittings & Tools</h2>
+      <div class="content">
+        <div class="grid cols-3">
+          <div>
+            <label for="fitType">Fitting Type</label>
+            <select id="fitType"></select>
+            <div class="help">Pick a fitting by K-value (minor loss coefficient). You can edit K or use equivalent length.</div>
+          </div>
+          <div>
+            <label for="fitK">K (dimensionless)</label>
+            <input id="fitK" type="number" step="any" />
+          </div>
+          <div>
+            <label for="fitCount">Quantity</label>
+            <input id="fitCount" type="number" step="1" min="1" value="1" />
+          </div>
+        </div>
+        <div class="grid cols-3" style="margin-top:8px;">
+          <div>
+            <label for="fitLe">Equivalent Length Lₑ (optional) <span class="small" id="leUnit">(m)</span></label>
+            <input id="fitLe" type="number" step="any" placeholder="if using equivalent length" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="btnAddFit">Add Fitting</button>
+          </div>
+          <div class="help">Note: If Lₑ provided, K will be computed as <span class="mono">K = f · (Lₑ/D)</span> at the solved friction factor.</div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <table id="fitTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Fitting</th>
+                <th class="right">K</th>
+                <th class="right">Qty</th>
+                <th class="right">Lₑ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="small">Common K-values are approximate and depend on geometry (e.g., r/D for elbows) and Reynolds number. Adjust if you have vendor data.</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <details style="margin-top:14px;">
+          <summary>⚙️ Unit Converter & Quick Tools</summary>
+          <div class="hint grid cols-3">
+            <div>
+              <label>Flow: <span id="convFlowUnitA">m³/h</span> → <span id="convFlowUnitB">L/s</span></label>
+              <div class="row"><input id="convFlowA" type="number" step="any" /><button class="btn" id="btnConvFlow">Convert</button></div>
+              <div class="help mono" id="convFlowB"></div>
+            </div>
+            <div>
+              <label>Viscosity: cP → Pa·s</label>
+              <div class="row"><input id="convMuCp" type="number" step="any" placeholder="e.g., 1" /><button class="btn" id="btnConvMu">Convert</button></div>
+              <div class="help mono" id="convMuPas"></div>
+            </div>
+            <div>
+              <label>Roughness: mm → m</label>
+              <div class="row"><input id="convEpsMm" type="number" step="any" placeholder="e.g., 0.045" /><button class="btn" id="btnConvEps">Convert</button></div>
+              <div class="help mono" id="convEpsM"></div>
+            </div>
+          </div>
+        </details>
+
+        <div class="row" style="margin-top:14px; justify-content: space-between; align-items:center;">
+          <div class="row">
+            <button class="btn primary" id="btnCalc">Calculate</button>
+            <button class="btn" id="btnPrint">Print</button>
+          </div>
+          <div class="row">
+            <span class="tag" id="reTag">Re: –</span>
+            <span class="tag" id="flowRegime">Flow: –</span>
+            <span class="tag" id="fricFact">f: –</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <h2>Results</h2>
+          <div class="content">
+            <div class="grid cols-3">
+              <div>
+                <div>Velocity v</div>
+                <div class="mono" id="vOut">–</div>
+                <div class="small" id="vUnit">m/s</div>
+              </div>
+              <div>
+                <div>Head Loss (major + minor)</div>
+                <div class="mono" id="hLossOut">–</div>
+                <div class="small">m of liquid</div>
+              </div>
+              <div>
+                <div>Total Pressure Drop Δp</div>
+                <div class="mono" id="pDropOut">–</div>
+                <div class="small" id="pUnit">Pa (also kPa, bar, psi)</div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <table>
+                <tbody id="detailRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div>Notes:
+      <ul>
+        <li>Darcy friction factor <span class="mono">f</span> via Haaland explicit approximation; refined with 3 Colebrook iterations when turbulent. For laminar <span class="mono">Re &lt; 2300</span>, uses <span class="mono">f = 64/Re</span>.</li>
+        <li>Minor losses: <span class="mono">ΣK · v²/(2g)</span>. If an item has equivalent length Lₑ, it contributes <span class="mono">K = f·(Lₑ/D)</span> at the solved <span class="mono">f</span>.</li>
+        <li>Total Δp includes optional static head: <span class="mono">ρ g Δz</span> (positive when lifting).</li>
+      </ul>
+    </div>
+  </footer>
+
+  <script>
+    // --- Utilities ---
+    const g = 9.80665;
+
+    const fittingsLib = [
+      { name: "Entrance, sharp-edged", K: 0.5 },
+      { name: "Exit (free discharge)", K: 1.0 },
+      { name: "Elbow 90° (r/D≈1)", K: 0.9 },
+      { name: "Elbow 45°", K: 0.4 },
+      { name: "Tee, through run", K: 0.6 },
+      { name: "Tee, branch", K: 1.8 },
+      { name: "Gate valve, fully open", K: 0.15 },
+      { name: "Ball valve, fully open", K: 0.05 },
+      { name: "Globe valve, fully open", K: 10.0 },
+      { name: "Sudden contraction (typical)", K: 0.5 },
+      { name: "Sudden expansion (K=(1-A1/A2)^2)", K: 1.0 },
+      { name: "Check valve (swing)", K: 2.0 }
+    ];
+
+    const fitSelect = document.getElementById('fitType');
+    fittingsLib.forEach((f, i) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = `${f.name} (K≈${f.K})`;
+      fitSelect.appendChild(opt);
+    });
+
+    const $ = id => document.getElementById(id);
+
+    function setUnits(system) {
+      if (system === 'si') {
+        $('rhoUnit').textContent = '(kg/m³)';
+        $('muUnit').textContent = '(Pa·s)';
+        $('dUnit').textContent = '(m)';
+        $('lUnit').textContent = '(m)';
+        $('epsUnit').textContent = '(m)';
+        $('zUnit').textContent = '(m, +up)';
+        $('qUnit').textContent = '(m³/h)';
+        $('mdotUnit').textContent = '(kg/s)';
+        $('leUnit').textContent = '(m)';
+        $('vUnit').textContent = 'm/s';
+        $('pUnit').textContent = 'Pa (also kPa, bar, psi)';
+        $('convFlowUnitA').textContent = 'm³/h';
+        $('convFlowUnitB').textContent = 'L/s';
+      } else {
+        $('rhoUnit').textContent = '(lbm/ft³)';
+        $('muUnit').textContent = '(lbm/ft·s)';
+        $('dUnit').textContent = '(in)';
+        $('lUnit').textContent = '(ft)';
+        $('epsUnit').textContent = '(in)';
+        $('zUnit').textContent = '(ft, +up)';
+        $('qUnit').textContent = '(gpm)';
+        $('mdotUnit').textContent = '(lbm/s)';
+        $('leUnit').textContent = '(ft)';
+        $('vUnit').textContent = 'ft/s';
+        $('pUnit').textContent = 'psi (also Pa, kPa, bar)';
+        $('convFlowUnitA').textContent = 'gpm';
+        $('convFlowUnitB').textContent = 'ft³/s';
+      }
+    }
+
+    function toSI(system, values) {
+      // Convert user inputs to SI units
+      const v = { ...values };
+      if (system === 'us') {
+        // density lbm/ft³ -> kg/m³ (1 lbm/ft³ = 16.01846337396 kg/m³)
+        if (v.rho != null) v.rho = v.rho * 16.01846337396;
+        // viscosity lbm/(ft·s) -> Pa·s (1 = 1.48816394357 Pa·s)
+        if (v.mu != null) v.mu = v.mu * 1.48816394357;
+        // D, L, eps, dz, Le: in/ft -> m
+        if (v.D != null) v.D = v.D * 0.0254;
+        if (v.L != null) v.L = v.L * 0.3048;
+        if (v.eps != null) v.eps = v.eps * 0.0254;
+        if (v.dz != null) v.dz = v.dz * 0.3048;
+        if (v.Le != null) v.Le = v.Le * 0.3048;
+        // Q gpm -> m³/s (1 gpm = 6.30901964e-5 m³/s)
+        if (v.Q != null) v.Q = v.Q * 6.30901964e-5;
+        // mDot lbm/s -> kg/s
+        if (v.mDot != null) v.mDot = v.mDot * 0.45359237;
+      } else { // SI labels may be m³/h for Q visual; convert to m³/s
+        if (v.Q != null) v.Q = v.Q / 3600.0;
+      }
+      return v;
+    }
+
+    function fromSI(system, out) {
+      const v = { ...out };
+      if (system === 'us') {
+        // velocity m/s -> ft/s
+        if (v.v != null) v.v = v.v * 3.280839895;
+        // head m -> ft
+        if (v.h != null) v.h = v.h * 3.280839895;
+        // pressure Pa -> psi
+        if (v.dp != null) v.dpPsi = v.dp / 6894.757293168;
+        if (v.dp != null) v.dpKPa = v.dp / 1000.0;
+        if (v.dp != null) v.dpBar = v.dp / 1e5;
+      } else {
+        if (v.dp != null) {
+          v.dpKPa = v.dp / 1000.0;
+          v.dpBar = v.dp / 1e5;
+          v.dpPsi = v.dp / 6894.757293168;
+        }
+      }
+      return v;
+    }
+
+    function areaFromD(D) { return Math.PI * D * D / 4.0; }
+
+    function reynolds(rho, v, D, mu) {
+      return rho * v * D / mu; // SI
+    }
+
+    function haalandF(Re, relRough) {
+      if (Re < 2300) return 64.0 / Re; // laminar
+      const invSqrtF = -1.8 * Math.log10( Math.pow(relRough/3.7, 1.11) + 6.9/Re );
+      const f0 = 1.0 / (invSqrtF * invSqrtF);
+      // Colebrook refine (3 iterations)
+      let f = f0;
+      if (Re > 4000) {
+        for (let i=0; i<3; i++) {
+          const rhs = -2.0 * Math.log10( (relRough/3.7) + (2.51/(Re*Math.sqrt(f))) );
+          f = 1.0 / (rhs*rhs);
+        }
+      }
+      return f;
+    }
+
+    function sumK(f, D, fitList) {
+      // If an item has Le, use K = f * (Le/D)
+      return fitList.reduce((acc, it) => acc + it.qty * ( (it.Le ? (f * (it.Le / D)) : it.K) ), 0);
+    }
+
+    // --- App State ---
+    let fittings = [];
+
+    function renderFittings() {
+      const tb = $('fitTable').querySelector('tbody');
+      tb.innerHTML = '';
+      fittings.forEach((f, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${f.name}</td>
+          <td class="right">${f.Le ? '—' : f.K.toFixed(3)}</td>
+          <td class="right">${f.qty}</td>
+          <td class="right">${f.Le ? f.Le.toFixed(3) : '—'}</td>
+          <td class="right"><button class="btn" data-i="${i}">Remove</button></td>
+        `;
+        tb.appendChild(tr);
+      });
+      // bind remove
+      tb.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const i = parseInt(e.target.getAttribute('data-i'));
+          fittings.splice(i,1); renderFittings();
+        });
+      });
+    }
+
+    function addFitting() {
+      const idx = parseInt($('fitType').value);
+      const base = fittingsLib[idx] || { name: 'Custom', K: 0 };
+      let K = parseFloat($('fitK').value);
+      const qty = Math.max(1, parseInt($('fitCount').value || '1'));
+      const LeRaw = $('fitLe').value.trim();
+      const Le = LeRaw === '' ? null : parseFloat(LeRaw);
+      if (!isFinite(K) && !isFinite(Le)) { alert('Enter K or equivalent length Lₑ.'); return; }
+      if (!isFinite(K)) K = 0;
+      fittings.push({ name: base.name, K, qty, Le });
+      $('fitK').value=''; $('fitCount').value='1'; $('fitLe').value='';
+      renderFittings();
+    }
+
+    function useExample() {
+      $('units').value = 'si'; setUnits('si');
+      $('fluidPreset').value = '{"rho":998,"mu":0.001}'; $('fluidPreset').dispatchEvent(new Event('change'));
+      $('D').value = 0.05; $('L').value = 30; $('roughPreset').value = '{"eps":0.000045}'; $('roughPreset').dispatchEvent(new Event('change'));
+      $('dz').value = 3; $('flowType').value = 'Q'; $('Q').value = 2; $('mDot').value = '';
+      fittings = [];
+      fittings.push({ name: 'Entrance, sharp-edged', K: 0.5, qty: 1, Le: null });
+      fittings.push({ name: 'Elbow 90° (r/D≈1)', K: 0.9, qty: 4, Le: null });
+      fittings.push({ name: 'Gate valve, fully open', K: 0.15, qty: 1, Le: null });
+      fittings.push({ name: 'Exit (free discharge)', K: 1.0, qty: 1, Le: null });
+      renderFittings();
+    }
+
+    function resetAll() {
+      document.querySelectorAll('input').forEach(i => i.value = '');
+      $('units').value='si'; setUnits('si');
+      $('fluidPreset').value=''; $('roughPreset').value='';
+      $('flowType').value='Q';
+      fittings = []; renderFittings();
+      $('reTag').textContent = 'Re: –'; $('flowRegime').textContent = 'Flow: –'; $('fricFact').textContent = 'f: –';
+      $('vOut').textContent = '–'; $('hLossOut').textContent = '–'; $('pDropOut').textContent = '–';
+      $('detailRows').innerHTML='';
+    }
+
+    function calc() {
+      const sys = $('units').value;
+      // Gather inputs
+      let rho = parseFloat($('rho').value);
+      let mu = parseFloat($('mu').value);
+      let D = parseFloat($('D').value);
+      let L = parseFloat($('L').value);
+      let eps = parseFloat($('eps').value);
+      let dz = parseFloat($('dz').value || '0');
+      let Q = $('Q').value.trim() === '' ? null : parseFloat($('Q').value);
+      let mDot = $('mDot').value.trim() === '' ? null : parseFloat($('mDot').value);
+
+      // Validate required
+      const need = [];
+      if (!isFinite(rho)) need.push('Density ρ');
+      if (!isFinite(mu)) need.push('Viscosity μ');
+      if (!isFinite(D)) need.push('Diameter D');
+      if (!isFinite(L)) need.push('Length L');
+      if (!isFinite(eps)) need.push('Roughness ε');
+      if (Q==null && mDot==null) need.push('Flow Q or ṁ');
+      if (need.length) { alert('Please enter: ' + need.join(', ')); return; }
+
+      // Convert to SI
+      const si = toSI(sys, { rho, mu, D, L, eps, dz, Q, mDot });
+      rho = si.rho; mu = si.mu; D = si.D; L = si.L; eps = si.eps; dz = si.dz; Q = si.Q; mDot = si.mDot;
+
+      if (Q==null && mDot!=null) Q = mDot / rho; // derive Q if mass flow provided
+
+      const A = areaFromD(D);
+      const v = Q / A; // m/s
+      const Re = reynolds(rho, v, D, mu);
+      const rel = eps / D;
+      let f = haalandF(Re, rel);
+
+      // Minor K (with equivalent lengths computed with f)
+      const Ksum = sumK(f, D, fittings);
+
+      // Head losses
+      const headMajor = f * (L / D) * (v*v / (2*g));
+      const headMinor = Ksum * (v*v / (2*g));
+      const headStatic = dz; // already in meters of liquid
+      const headTotal = headMajor + headMinor + headStatic;
+      const dp = rho * g * headTotal; // Pa
+
+      // Output tags
+      $('reTag').textContent = 'Re: ' + Re.toFixed(0);
+      $('flowRegime').innerHTML = 'Flow: ' + (Re < 2300 ? '<span class="pill warn">laminar</span>' : (Re < 4000 ? '<span class="pill warn">transition</span>' : '<span class="pill ok">turbulent</span>'));
+      $('fricFact').textContent = 'f: ' + f.toFixed(5);
+
+      const converted = fromSI(sys, { v, h: headMajor + headMinor, dp });
+      $('vOut').textContent = (converted.v).toFixed(3);
+      $('hLossOut').textContent = (converted.h).toFixed(3);
+      let dpLine = '';
+      if (sys === 'us') dpLine = `${converted.dpPsi.toFixed(3)} psi  ( ${converted.dpKPa.toFixed(1)} kPa | ${converted.dpBar.toFixed(3)} bar )`;
+      else dpLine = `${(dp).toFixed(0)} Pa  ( ${converted.dpKPa.toFixed(1)} kPa | ${converted.dpBar.toFixed(3)} bar | ${converted.dpPsi.toFixed(3)} psi )`;
+      $('pDropOut').textContent = dpLine;
+
+      // Details table
+      const rows = [
+        ['Area A', A, 'm²'],
+        ['Velocity v', v, 'm/s'],
+        ['Reynolds Re', Re, '–'],
+        ['Relative roughness ε/D', rel, '–'],
+        ['Friction factor f', f, '–'],
+        ['Major head loss', headMajor, 'm'],
+        ['Minor K sum', Ksum, '–'],
+        ['Minor head loss', headMinor, 'm'],
+        ['Static head Δz', headStatic, 'm'],
+        ['Total head loss', headTotal, 'm'],
+        ['Pressure drop Δp', dp, 'Pa']
+      ];
+      const tbody = $('detailRows');
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<th>${r[0]}</th><td class="mono">${Number(r[1]).toExponential ? (typeof r[1]==='number' ? r[1].toPrecision(6) : r[1]) : r[1]}</td><td>${r[2]}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Events ---
+    $('units').addEventListener('change', e => setUnits(e.target.value));
+    $('fluidPreset').addEventListener('change', e => {
+      const v = e.target.value ? JSON.parse(e.target.value) : null;
+      if (v) { $('rho').value = v.rho; $('mu').value = v.mu; }
+    });
+    $('roughPreset').addEventListener('change', e => {
+      const v = e.target.value ? JSON.parse(e.target.value) : null;
+      if (v) { $('eps').value = v.eps; }
+    });
+
+    $('btnAddFit').addEventListener('click', addFitting);
+    $('btnExample').addEventListener('click', useExample);
+    $('btnReset').addEventListener('click', resetAll);
+    $('btnCalc').addEventListener('click', calc);
+    $('btnPrint').addEventListener('click', () => window.print());
+
+    $('fitType').addEventListener('change', e => {
+      const idx = parseInt(e.target.value);
+      if (!isNaN(idx)) $('fitK').value = fittingsLib[idx].K;
+    });
+
+    // Converters
+    $('btnConvFlow').addEventListener('click', () => {
+      const sys = $('units').value;
+      const val = parseFloat($('convFlowA').value);
+      if (!isFinite(val)) { $('convFlowB').textContent = 'Enter a number'; return; }
+      if (sys === 'si') {
+        // m3/h -> L/s (1 m3/h = 0.277777... L/s)
+        $('convFlowB').textContent = (val/3.6).toFixed(4) + ' L/s';
+      } else {
+        // gpm -> ft3/s (1 gpm = 0.00222800926 ft3/s)
+        $('convFlowB').textContent = (val*0.00222800926).toFixed(5) + ' ft³/s';
+      }
+    });
+    $('btnConvMu').addEventListener('click', () => {
+      const cp = parseFloat($('convMuCp').value);
+      if (!isFinite(cp)) { $('convMuPas').textContent = 'Enter a number'; return; }
+      $('convMuPas').textContent = (cp/1000).toFixed(6) + ' Pa·s';
+    });
+    $('btnConvEps').addEventListener('click', () => {
+      const mm = parseFloat($('convEpsMm').value);
+      if (!isFinite(mm)) { $('convEpsM').textContent = 'Enter a number'; return; }
+      $('convEpsM').textContent = (mm/1000).toExponential(6) + ' m';
+    });
+
+    // Initialize
+    setUnits('si');
+    $('fitType').value = '0'; $('fitK').value = fittingsLib[0].K;
+  </script>
+</body>
+</html>
